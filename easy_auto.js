@@ -78,9 +78,11 @@ if (commits[0].sha !== config.last) {
   saveConfig()
   console.log("Starting to compile paper, do not close. This will take a while.")
   console.log("Applying Patches")
-  await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['applyPatches'], { cwd:"paper_repo" }).promise
+  //await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['applyPatches'], { cwd:"paper_repo" }).promise
+  await spawn(process.platform === "win32" ? "gradlew.bat" : "./gradlew", ['applyPatches'], { cwd:"paper_repo", stdio:"inherit" }).promise
   console.log("Creating Jar")
-  await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
+  //await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
+  await spawn(process.platform === "win32" ? "gradlew.bat" : "./gradlew", ['createReobfBundlerJar'], { cwd:"paper_repo", stdio:"inherit" }).promise
   await fs.promises.mkdir("server-files", { recursive: true })
   await fs.promises.rename(path.join("paper_repo/build/libs", fs.readdirSync("paper_repo/build/libs")[0]), "server-files/server.jar")
   console.log("Finished compiling paper")
