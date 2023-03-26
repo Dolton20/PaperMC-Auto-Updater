@@ -22,7 +22,7 @@ if (!("jdk17" in config)) {
   console.log("Run again after editing the config")
   process.exit(1)
 }
-console.log("JDK17 install location: ", path.join(config.jdk17, "java.exe"))
+console.log("JDK17 install location: ", path.join(config.jdk17, `java${process.platform === "win32" ? ".exe" : ""}`))
 if (!fs.existsSync(path.join(config.jdk17, "java.exe")) && !fs.existsSync(path.join(config.jdk17, "java"))) {
   console.log("JDK17 is not installed or the path in config.json is incorrect")
   while (true) {}
@@ -77,8 +77,10 @@ if (commits[0].sha !== config.last) {
   config.last = commits[0].sha
   saveConfig()
   console.log("Starting to compile paper, do not close. This will take a while.")
-  await spawn(`gradlew${process.platform === "win32" ? ".bat" : ""}`, ['applyPatches'], { cwd:"paper_repo" }).promise
-  await spawn(`gradlew${process.platform === "win32" ? ".bat" : ""}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
+  console.log("Applying Patches")
+  await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['applyPatches'], { cwd:"paper_repo" }).promise
+  console.log("Creating Jar")
+  await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
   await fs.promises.mkdir("server-files", { recursive: true })
   await fs.promises.rename(path.join("paper_repo/build/libs", fs.readdirSync("paper_repo/build/libs")[0]), "server-files/server.jar")
   console.log("Finished compiling paper")
