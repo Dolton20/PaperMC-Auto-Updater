@@ -1,5 +1,5 @@
 {
-  "name": "Minecraft Easy Auto",
+  "name": "minecraft_easy_auto",
   "type": "module",
-  "bin": {"mcstart": "./easy_auto.js"}
+  "bin": {"mc_update": "./easy_auto.js", "mc_win": "./mcstart.bat", "mc_bash": "./mcstart"}
 }

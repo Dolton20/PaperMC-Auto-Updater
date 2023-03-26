@@ -12,15 +12,15 @@ function saveConfig() { fs.writeFileSync('config.json', JSON.stringify(config, n
 
 if (!("jdk17" in config)) {
   config.jdk17 = "C:/Program Files/Java/jdk-17/bin"
-  config.server_launch_options = "-Xmx1024M -Xms1024M -jar server.jar nogui"
   config.geyser = false
   config.floodgate = false
   config.geyserLength = 0
   config.floodgateLength = 0
   config.windows_playit = "to use playit insert path here"
   saveConfig()
-  console.log("wrote default config to config.json (IT MAY NEED TO BE CHANGED)")
-  process.exit(0)
+  console.log("Wrote default config to config.json")
+  console.log("Run again after editing the config")
+  process.exit(1)
 }
 console.log("JDK17 install location: ", path.join(config.jdk17, "java.exe"))
 if (!fs.existsSync(path.join(config.jdk17, "java.exe")) && !fs.existsSync(path.join(config.jdk17, "java"))) {
@@ -76,11 +76,12 @@ if (commits[0].sha !== config.last) {
   console.log("outdated")
   config.last = commits[0].sha
   saveConfig()
-  console.log("starting to compile")
+  console.log("Starting to compile paper, do not close. This will take a while.")
   await spawn(`gradlew${process.platform === "win32" ? ".bat" : ""}`, ['applyPatches'], { cwd:"paper_repo" }).promise
   await spawn(`gradlew${process.platform === "win32" ? ".bat" : ""}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
   await fs.promises.mkdir("server-files", { recursive: true })
   await fs.promises.rename(path.join("paper_repo/build/libs", fs.readdirSync("paper_repo/build/libs")[0]), "server-files/server.jar")
+  console.log("Finished compiling paper")
 } else {
   console.log("paper is up to date")
 }
@@ -108,10 +109,6 @@ if (!fs.existsSync("server-files/eula.txt")) {
 // Starts playit if installed
 if (fs.existsSync(config.windows_playit)) { child_process.exec(`start cmd /k "${path.resolve(config.windows_playit)}"`) }
 
-// Starts the minecraft server
-console.log("starting minecraft server")
-child_process.exec(`start cmd.exe /k "${config.jdk17}/java${process.platform === "win32" ? ".exe" : ""}" ${config.server_launch_options}`, {cwd: "./server-files"})
-
 await new Promise(fulfil => setTimeout(fulfil, 100))
-console.log("Finished")
+//console.log("Finished")
 process.exit(0)
