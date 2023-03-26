@@ -1,5 +1,5 @@
 {
   "name": "minecraft_easy_auto",
   "type": "module",
-  "bin": {"mc_update": "./easy_auto.js", "mc_win": "./mcstart.bat", "mc_bash": "./mcstart"}
+  "bin": {"mc_update": "./easy_auto.js", "mc_win": "./mcstart.bat", "mc_bash": "./mcstart-npx"}
 }
