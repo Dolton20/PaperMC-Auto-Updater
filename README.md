@@ -21,7 +21,7 @@ JDK17: https://www.oracle.com/java/technologies/downloads/#java17
 
 ### Steps
 1. Clone or Download this repo and place it in the file location you want to run your server.
-2. Then to run the server open ether the mcstart.bat file for windows or the mcstart file for linux. And thats basically it.
+2. Then to run the server open ether the mcstart.bat file for windows or the mcstart file for linux.
 
 ### Extra
 
