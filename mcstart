@@ -1,4 +1,7 @@
 #!/bin/bash
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-node "$SCRIPT_DIR"/easy_auto.js && cd ./server-files && java -Xmx1024M -Xms1024M -jar server.jar nogui
+cd `dirname $0`
+SCRIPTDIR=`pwd`
+cd -
+
+node "$SCRIPTDIR"/easy_auto.js && cd ./server-files && java -Xmx1024M -Xms1024M -jar server.jar nogui

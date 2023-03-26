@@ -19,13 +19,15 @@ if (!("jdk17" in config)) {
   config.windows_playit = "to use playit insert path here"
   saveConfig()
   console.log("Wrote default config to config.json")
+  console.log('Default JDK17 installation path for Linux: "/usr/lib/jvm/java-17-openjdk-amd64/bin"')
   console.log("Run again after editing the config")
   process.exit(1)
 }
 console.log("JDK17 install location: ", path.join(config.jdk17, `java${process.platform === "win32" ? ".exe" : ""}`))
 if (!fs.existsSync(path.join(config.jdk17, "java.exe")) && !fs.existsSync(path.join(config.jdk17, "java"))) {
   console.log("JDK17 is not installed or the path in config.json is incorrect")
-  while (true) {}
+  console.log('Default JDK17 installation path for Linux: "/usr/lib/jvm/java-17-openjdk-amd64/bin"')
+  process.exit(1)
 }
 
 // Spawns a child process
