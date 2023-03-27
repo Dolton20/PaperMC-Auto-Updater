@@ -4,6 +4,7 @@ import fs from "node:fs"
 import child_process from "node:child_process"
 import path from "node:path"
 import readline from "node:readline/promises"
+import stream from "node:stream"
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 
@@ -17,17 +18,21 @@ if (!("jdk17" in config)) {
   config.geyserLength = 0
   config.floodgateLength = 0
   config.windows_playit = "to use playit insert path here"
+  config.compilePaper = false
   saveConfig()
   console.log("Wrote default config to config.json")
   console.log('Default JDK17 installation path for Linux: "/usr/lib/jvm/java-17-openjdk-amd64/bin"')
   console.log("Run again after editing the config")
   process.exit(1)
 }
-console.log("JDK17 install location: ", path.join(config.jdk17, `java${process.platform === "win32" ? ".exe" : ""}`))
-if (!fs.existsSync(path.join(config.jdk17, "java.exe")) && !fs.existsSync(path.join(config.jdk17, "java"))) {
-  console.log("JDK17 is not installed or the path in config.json is incorrect")
-  console.log('Default JDK17 installation path for Linux: "/usr/lib/jvm/java-17-openjdk-amd64/bin"')
-  process.exit(1)
+
+if (config.compilePaper) {
+  console.log("JDK17 install location: ", path.join(config.jdk17, `java${process.platform === "win32" ? ".exe" : ""}`))
+  if (!fs.existsSync(path.join(config.jdk17, "java.exe")) && !fs.existsSync(path.join(config.jdk17, "java"))) {
+    console.log("JDK17 is not installed or the path in config.json is incorrect")
+    console.log('Default JDK17 installation path for Linux: "/usr/lib/jvm/java-17-openjdk-amd64/bin"')
+    process.exit(1)
+  }
 }
 
 // Spawns a child process
@@ -67,29 +72,52 @@ async function updatePlugin(url, prop, fileName, pluginName) {
 const commits = await fetch("https://api.github.com/repos/papermc/paper/commits").then(e => e.json())
 
 // Clones and Fetchs PaperMC
-if (!fs.existsSync("paper_repo")) {
-  await spawn('git', ['clone', 'https://github.com/PaperMC/Paper.git', 'paper_repo']).promise
+if (config.compilePaper) {
+  if (!fs.existsSync("paper_repo")) {
+    await spawn('git', ['clone', 'https://github.com/PaperMC/Paper.git', 'paper_repo']).promise
+  }
 }
 
-await gitPull("paper_repo")
+if (config.compilePaper) {
+  await gitPull("paper_repo")
+}
 
-// Compiles PaperMC
-if (commits[0].sha !== config.last) {
-  console.log("outdated")
-  config.last = commits[0].sha
-  saveConfig()
-  console.log("Starting to compile paper, do not close. This will take a while.")
-  console.log("Applying Patches")
-  //await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['applyPatches'], { cwd:"paper_repo" }).promise
-  await spawn(process.platform === "win32" ? "gradlew.bat" : "./gradlew", ['applyPatches'], { cwd:"paper_repo", stdio:"inherit" }).promise
-  console.log("Creating Jar")
-  //await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
-  await spawn(process.platform === "win32" ? "gradlew.bat" : "./gradlew", ['createReobfBundlerJar'], { cwd:"paper_repo", stdio:"inherit" }).promise
+// Compiles PaperMC Or Downloads PaperMC
+if (config.compilePaper) {
+  if (commits[0].sha !== config.last) {
+    console.log("outdated")
+    config.last = commits[0].sha
+    saveConfig()
+    console.log("Starting to compile paper, do not close. This will take a while.")
+    console.log("Applying Patches")
+    //await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['applyPatches'], { cwd:"paper_repo" }).promise
+    await spawn(process.platform === "win32" ? "gradlew.bat" : "./gradlew", ['applyPatches'], { cwd:"paper_repo", stdio:"inherit" }).promise
+    console.log("Creating Jar")
+    //await spawn(`${process.platform === "win32" ? "gradlew.bat" : "./gradlew"}`, ['createReobfBundlerJar'], { cwd:"paper_repo" }).promise
+    await spawn(process.platform === "win32" ? "gradlew.bat" : "./gradlew", ['createReobfBundlerJar'], { cwd:"paper_repo", stdio:"inherit" }).promise
+    await fs.promises.mkdir("server-files", { recursive: true })
+    await fs.promises.rename(path.join("paper_repo/build/libs", fs.readdirSync("paper_repo/build/libs")[0]), "server-files/server.jar")
+    console.log("Finished compiling paper")
+  } else {
+    console.log("paper is up to date")
+  }
+}else {
   await fs.promises.mkdir("server-files", { recursive: true })
-  await fs.promises.rename(path.join("paper_repo/build/libs", fs.readdirSync("paper_repo/build/libs")[0]), "server-files/server.jar")
-  console.log("Finished compiling paper")
-} else {
-  console.log("paper is up to date")
+  const api = "https://api.papermc.io/v2"
+  const {versions} = await fetch(`${api}/projects/paper`).then(e => e.json())
+  for (let i = versions.length-1; i >= 0; i--) {
+    const {builds} = await fetch(`${api}/projects/paper/versions/${versions[i]}/builds`).then(e => e.json())
+    const build = builds.findLast(e => e.channel === "default")
+    if (!build) { continue }
+    if (build.build <= (config.lastPaperBuild ?? 0)) { break }
+    console.log("downloading paper")
+    const res = await fetch(`${api}/projects/paper/versions/${versions[i]}/builds/${build.build}/downloads/${build.downloads.application.name}`)
+    const out = fs.createWriteStream("server-files/server.jar")
+    await stream.promises.finished(stream.Readable.fromWeb(res.body).pipe(out))
+    config.lastPaperBuild = build.build
+    saveConfig()
+    break
+  }
 }
 
 // Update/Install Geyser
