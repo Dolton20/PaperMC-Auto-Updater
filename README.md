@@ -25,6 +25,8 @@ JDK17: https://www.oracle.com/java/technologies/downloads/#java17
 
 ### Extra
 
+To compile paper from source go into the config.json file and set compile paper to true.
+
 To use geyser or floodgate go into the config.json and set whichever ones you want to enable to true. For floodgate you may need to manually set auth-type to floodgate in geyser's config.yml located in /server-files/plugins/Geyser-Spigot/config.yml
 
 For playit download playit.exe from https://playit.gg/download and place it anywhere and copy the path and paste it into the windows_playit section of the config.json (If there are any replace backslashes with forward slashes)
